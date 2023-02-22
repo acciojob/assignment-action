@@ -11,5 +11,5 @@ outputs:
   scoreReceived:
     description: 'Score received by the student'
 runs:
-  using: 'node12'
+  using: 'node18'
   main: 'dist/index.js'
