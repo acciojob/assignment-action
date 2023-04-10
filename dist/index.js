@@ -134,8 +134,7 @@ function run() {
             const [repoOwner, repoName] = githubRepo.split('/');
             var repoWorkSpace = process.env['GITHUB_WORKSPACE'];
             const token = process.env['ACCIO_ASGMNT_ACTION_TOKEN'];
-            // const ACCIO_API_ENDPOINT = 'https://api.acciojob.com';
-            const ACCIO_API_ENDPOINT = 'https://acciojob-dev-eobnd7jx2q-el.a.run.app';
+            const ACCIO_API_ENDPOINT = process.env['ACCIOJOB_BACKEND_URL'];
             if (!token)
                 throw new Error('No token given!');
             if (!repoWorkSpace)
@@ -165,7 +164,7 @@ function run() {
                 const questionTypeQuery = new URLSearchParams();
                 questionTypeQuery.append('templateName', assignmentName);
                 const questionTypeData = yield axios_1.default.get(`${ACCIO_API_ENDPOINT}/github/get-question-type?${questionTypeQuery.toString()}`);
-                const questionTypeContent = questionTypeData.data;
+                const questionTypeContent = questionTypeData.data.parentType;
                 process.stdout.write(`question type = ${questionTypeContent}\n`);
                 // console.log(questionTypeContent);
                 const accioTestConfigData = fs_1.default.readFileSync(path_1.default.resolve(repoWorkSpace, 'acciotest.json'));
