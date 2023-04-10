@@ -4,6 +4,7 @@ import * as exec from '@actions/exec';
 import * as github from '@actions/github';
 import fs from 'fs';
 import path from 'path';
+import CryptoJS from 'crypto-js';
 
 // acciotest.json
 /*
@@ -13,15 +14,64 @@ import path from 'path';
 }
 */
 
+const ignoreFile = [
+  '.git',
+  '.gitignore',
+  'node_modules',
+  'package-lock.json',
+  'package.json',
+  'encrypted',
+  '.acciotest.json',
+  'test.yml',
+  '.cypress.json'
+];
+const permanentIgnore = ['node_modules', '.git', 'encrypted'];
+
+async function decrypt(
+  path: string,
+  parentDirectory: string,
+  childDirectory: string
+) {
+  try {
+    const dir = await fs.promises.opendir(`${path}/${childDirectory}`);
+    const newFilePath = `${path}/${parentDirectory}/${childDirectory}`;
+
+    for await (const dirent of dir) {
+      if (dirent.name === parentDirectory) {
+        continue;
+      } else if (!ignoreFile.includes(dirent.name) && dirent.isDirectory()) {
+        decrypt(path, parentDirectory, `${childDirectory}/${dirent.name}`);
+      } else if (!ignoreFile.includes(dirent.name) && !dirent.isDirectory()) {
+        let content = fs
+          .readFileSync(`${path}/${childDirectory}/${dirent.name}`)
+          .toString();
+        var bytes = CryptoJS.AES.decrypt(content, 'piyush<3rajat');
+        var originalText = bytes.toString(CryptoJS.enc.Utf8);
+        var stream = fs.createWriteStream(`${newFilePath}/${dirent.name}`);
+        stream.write(originalText);
+      } else if (!permanentIgnore.includes(dirent.name)) {
+        fs.copyFileSync(
+          `${path}/${childDirectory}/${dirent.name}`,
+          `${newFilePath}/${dirent.name}`
+        );
+      }
+    }
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function run(): Promise<void> {
   try {
     const githubRepo = process.env['GITHUB_REPOSITORY'];
     if (!githubRepo) throw new Error('No GITHUB_REPOSITORY');
 
     const [repoOwner, repoName] = githubRepo.split('/');
-    const repoWorkSpace: string | undefined = process.env['GITHUB_WORKSPACE'];
+    var repoWorkSpace: string | undefined = process.env['GITHUB_WORKSPACE'];
     const token = process.env['ACCIO_ASGMNT_ACTION_TOKEN'];
-    const ACCIO_API_ENDPOINT ='https://api.acciojob.com';
+    // const ACCIO_API_ENDPOINT = 'https://api.acciojob.com';
+    const ACCIO_API_ENDPOINT = 'https://acciojob-dev-eobnd7jx2q-el.a.run.app';
 
     if (!token) throw new Error('No token given!');
     if (!repoWorkSpace) throw new Error('No GITHUB_WORKSPACE');
@@ -52,16 +102,28 @@ async function run(): Promise<void> {
     );
 
     process.stdout.write(
-      `Pusher Username = ${contextPayload.pusher.username}\nPusher Name = ${contextPayload.pusher.name}`
+      `Pusher Username = ${contextPayload.pusher.username}\nPusher Name = ${contextPayload.pusher.name}\n`
     );
 
     if (assignmentName && studentUserName) {
+      const questionTypeQuery = new URLSearchParams();
+
+      questionTypeQuery.append('templateName', assignmentName);
+      const questionTypeData = await axios.get(
+        `${ACCIO_API_ENDPOINT}/github/get-question-type?${questionTypeQuery.toString()}`
+      );
+
+      const questionTypeContent = questionTypeData.data;
+
+      process.stdout.write(`question type = ${questionTypeContent}\n`);
+      // console.log(questionTypeContent);
+
       const accioTestConfigData = fs.readFileSync(
         path.resolve(repoWorkSpace, 'acciotest.json')
       );
       const accioTestConfig = JSON.parse(accioTestConfigData.toString());
-
       process.stdout.write(`Test Config: ${accioTestConfigData.toString()}`);
+      var cypressPath;
 
       const query = new URLSearchParams();
       query.append('repo', accioTestConfig.testRepo);
@@ -87,30 +149,66 @@ async function run(): Promise<void> {
         testFileContent
       );
 
-      const cypressInstallExitCode = await exec.exec('npm install', undefined, {
-        cwd: repoWorkSpace
-      });
+      if (questionTypeContent == 'CONTEST') {
+        // decrypting files in n encrypted folder and starting server from there.
 
-      process.stdout.write(
-        `\nnpm install exit code ${cypressInstallExitCode}\n`
-      );
+        await decrypt(repoWorkSpace + '/encrypted', '', '');
 
-      const startServer = exec.exec('npm start', undefined, {
-        cwd: repoWorkSpace
-      });
+        const encryptedRepoWorkSpace = repoWorkSpace + '/encrypted';
 
-      process.stdout.write(`\nnpm start exit code ${startServer}`);
+        const cypressInstallExitCode = await exec.exec(
+          'npm install',
+          undefined,
+          {
+            cwd: encryptedRepoWorkSpace
+          }
+        );
 
-      const cypressPath =
-        require.resolve('cypress', {
-          paths: [repoWorkSpace]
-        }) || 'cypress';
+        process.stdout.write(
+          `\nnpm install --prefix ./encrypted exit code ${cypressInstallExitCode}\n`
+        );
+
+        const startServer = exec.exec('npm start', undefined, {
+          cwd: encryptedRepoWorkSpace
+        });
+
+        process.stdout.write(
+          `\nnpm start --prefix ./encrypted exit code ${startServer}`
+        );
+        cypressPath =
+          require.resolve('cypress', {
+            paths: [encryptedRepoWorkSpace]
+          }) || 'cypress';
+      } else {
+        // starting server in repoWorkSpace
+        const cypressInstallExitCode = await exec.exec(
+          'npm install',
+          undefined,
+          {
+            cwd: repoWorkSpace
+          }
+        );
+
+        process.stdout.write(
+          `\nnpm install exit code ${cypressInstallExitCode}\n`
+        );
+
+        const startServer = exec.exec('npm start', undefined, {
+          cwd: repoWorkSpace
+        });
+
+        process.stdout.write(`\nnpm start exit code ${startServer}`);
+        cypressPath =
+          require.resolve('cypress', {
+            paths: [repoWorkSpace]
+          }) || 'cypress';
+      }
 
       const cypress = require(cypressPath);
       const testResults = await cypress.run();
 
       process.stdout.write(`\nEvaluating score...\n`);
-      
+
       const {data: score} = await axios.post(
         `${ACCIO_API_ENDPOINT}/github/get-score`,
         {
