@@ -136,6 +136,8 @@ async function run(): Promise<void> {
         `${ACCIO_API_ENDPOINT}/github/action-get-file?${query.toString()}`
       );
 
+      console.log('Received encodedTestFileData', encodedTestFileData.data);
+
       const testFileContent = Buffer.from(
         encodedTestFileData.data,
         'base64'
