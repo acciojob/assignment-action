@@ -129,6 +129,8 @@ async function run(): Promise<void> {
       query.append('filePath', accioTestConfig.pathToFile);
       query.append('token', token);
 
+      console.log('Calling endpoint for encodedTestFileData');
+
       // Get the encoded test file contents
       const encodedTestFileData = await axios.get(
         `${ACCIO_API_ENDPOINT}/github/action-get-file?${query.toString()}`
