@@ -164,7 +164,7 @@ function run() {
                 query.append('repo', accioTestConfig.testRepo);
                 query.append('filePath', accioTestConfig.pathToFile);
                 query.append('token', token);
-                process.stdout.write('Calling endpoint for encodedTestFileData');
+                process.stdout.write(`Calling endpoint for encodedTestFileData: ${query.toString()}\n`);
                 // Get the encoded test file contents
                 const encodedTestFileData = yield axios_1.default.get(`${ACCIO_API_ENDPOINT}/github/action-get-file?${query.toString()}`);
                 process.stdout.write('Received encodedTestFileData', encodedTestFileData.data);

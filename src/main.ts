@@ -129,7 +129,9 @@ async function run(): Promise<void> {
       query.append('filePath', accioTestConfig.pathToFile);
       query.append('token', token);
 
-      process.stdout.write('Calling endpoint for encodedTestFileData');
+      process.stdout.write(
+        `Calling endpoint for encodedTestFileData: ${query.toString()}\n`
+      );
 
       // Get the encoded test file contents
       const encodedTestFileData = await axios.get(
