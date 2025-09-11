@@ -164,10 +164,10 @@ function run() {
                 query.append('repo', accioTestConfig.testRepo);
                 query.append('filePath', accioTestConfig.pathToFile);
                 query.append('token', token);
-                console.log('Calling endpoint for encodedTestFileData');
+                process.stdout.write('Calling endpoint for encodedTestFileData');
                 // Get the encoded test file contents
                 const encodedTestFileData = yield axios_1.default.get(`${ACCIO_API_ENDPOINT}/github/action-get-file?${query.toString()}`);
-                console.log('Received encodedTestFileData', encodedTestFileData.data);
+                process.stdout.write('Received encodedTestFileData', encodedTestFileData.data);
                 const testFileContent = Buffer.from(encodedTestFileData.data, 'base64').toString('utf8');
                 fs_1.default.mkdirSync(path_1.default.resolve(repoWorkSpace, 'cypress/integration/tests'), {
                     recursive: true
