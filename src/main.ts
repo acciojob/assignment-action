@@ -1,7 +1,6 @@
-import axios from 'axios';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-
+import axios from 'axios';
 
 async function run(): Promise<void> {
   try {
@@ -9,7 +8,7 @@ async function run(): Promise<void> {
     if (!githubRepo) throw new Error('No GITHUB_REPOSITORY');
 
     const [repoOwner, repoName] = githubRepo.split('/');
-    var repoWorkSpace: string | undefined = process.env['GITHUB_WORKSPACE'];
+    const repoWorkSpace: string | undefined = process.env['GITHUB_WORKSPACE'];
     const token = process.env['ACCIO_ASGMNT_ACTION_TOKEN'];
     const ACCIO_API_ENDPOINT = process.env['ACCIOJOB_BACKEND_URL'];
 
@@ -39,18 +38,15 @@ async function run(): Promise<void> {
     }
 
     if (assignmentName && studentUserName) {
-      await axios.post(
-        `${ACCIO_API_ENDPOINT}/github/get-score`,
-        {
-          token,
-          testResults: null,
-          assignmentName,
-          repoName,
-          studentGithubUserName: studentUserName
-        }
-      );
+      await axios.post(`${ACCIO_API_ENDPOINT}/github/get-score`, {
+        token,
+        testResults: null,
+        assignmentName,
+        repoName,
+        studentGithubUserName: studentUserName
+      });
 
-      core.setOutput('Status:', "Forwarded Submission to backend server to AI Evaluation");
+      core.info('Forwarded Submission to backend server to AI Evaluation');
 
       process.exit(0);
     }

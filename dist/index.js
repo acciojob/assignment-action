@@ -52,9 +52,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const axios_1 = __importDefault(__nccwpck_require__(4922));
 const core = __importStar(__nccwpck_require__(7484));
 const github = __importStar(__nccwpck_require__(3228));
+const axios_1 = __importDefault(__nccwpck_require__(4922));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -62,7 +62,7 @@ function run() {
             if (!githubRepo)
                 throw new Error('No GITHUB_REPOSITORY');
             const [repoOwner, repoName] = githubRepo.split('/');
-            var repoWorkSpace = process.env['GITHUB_WORKSPACE'];
+            const repoWorkSpace = process.env['GITHUB_WORKSPACE'];
             const token = process.env['ACCIO_ASGMNT_ACTION_TOKEN'];
             const ACCIO_API_ENDPOINT = process.env['ACCIOJOB_BACKEND_URL'];
             if (!ACCIO_API_ENDPOINT)
@@ -98,7 +98,7 @@ function run() {
                     repoName,
                     studentGithubUserName: studentUserName
                 });
-                core.setOutput('Status:', "Forwarded Submission to backend server to AI Evaluation");
+                core.info('Forwarded Submission to backend server to AI Evaluation');
                 process.exit(0);
             }
         }
