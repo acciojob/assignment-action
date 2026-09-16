@@ -46,7 +46,7 @@ async function run(): Promise<void> {
         studentGithubUserName: studentUserName
       });
 
-      core.info('Forwarded Submission to backend server to AI Evaluation');
+      core.info('Forwarded Submission to backend server for AI Evaluation');
 
       process.exit(0);
     }
